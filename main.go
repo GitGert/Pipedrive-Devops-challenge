@@ -13,77 +13,73 @@ import (
 	"github.com/joho/godotenv"
 )
 
-func main() {
+var API_TOKEN string
+var COMPANY_DOMAIN string
 
+func main() {
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
+	API_TOKEN = os.Getenv("API_TOKEN")
+	COMPANY_DOMAIN = os.Getenv("COMPANY_DOMAIN")
 
 	r := mux.NewRouter()
-	// Define routes
+
 	r.HandleFunc("/deals", getDeals).Methods("GET")
 	r.HandleFunc("/post_deals", postDeals).Methods("GET") //TODO: CHANGE TO POST
 	r.HandleFunc("/put_deals", putDeals).Methods("GET")   //TODO: CHANGE TO PUT
 
-	// Start the server
 	fmt.Println("server started at http://localhost:8080/")
 	log.Fatal(http.ListenAndServe(":8080", r))
 }
 
-// // Pipedrive company domain
-// $company_domain = 'YOUR_COMPANY_DOMAIN';
-// https://pipedrive.com/api/v1/deals?limit=10
-// URL for Deal listing
-// $url = 'https://'+ COMPANY_DOMAIN+'.pipedrive.com/api/v1/deals?limit=10&api_token=' + API_TOKEN;
-
 // TODO: consider adding this kind of modularity into your code:       const response = await api.addDeal(data);
 func getDeals(w http.ResponseWriter, r *http.Request) {
-	var API_TOKEN = os.Getenv("API_TOKEN")
-	var COMPANY_DOMAIN = os.Getenv("COMPANY_DOMAIN")
-	w.Header().Set("Content-Type", "application/json")
+	// TODO: import these better
 
-	// json.NewEncoder(w).Encode(todos)
-
-	// requestURL := fmt.Sprintf("http://localhost:%d", serverPort)
-	// requestURL := "https://developers.pipedrive.com/docs/api/v1/Deals)"
-	requestURL := "https://" + COMPANY_DOMAIN + ".pipedrive.com/api/v1/deals?limit=10&api_token=" + API_TOKEN
-	// requestURL := "https://pipedrive.com/api/v1/deals?limit=10"
-	res, err := http.Get(requestURL)
-	if err != nil {
-		fmt.Printf("error making http request: %s\n", err)
-		os.Exit(1)
-	}
-
-	defer res.Body.Close()
-
-	body, _ := io.ReadAll(res.Body)
-	// fmt.Println(string(body))
-
-	var apiResponse ApiResponse
-
-	err = json.Unmarshal(body, &apiResponse)
-	if err != nil {
-		fmt.Println("Error unmarshalling JSON:", err)
+	if r.Method != http.MethodGet {
+		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
 		return
 	}
-	// fmt.Println("\n\n\n\n")
 
-	fmt.Println(apiResponse.Data)
+	requestURL := "https://" + COMPANY_DOMAIN + ".pipedrive.com/api/v1/deals?limit=10&api_token=" + API_TOKEN
 
-	// value := json.Unmarshal(res)
-	// fmt.Println(res)
-	// fmt.Printf("client: status code: %d\n", res.StatusCode)
+	req, err := http.NewRequest(http.MethodGet, requestURL, nil)
+	if err != nil {
+		log.Printf("Failed to create request: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Printf("error making http request: %s\n", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Printf("Failed to read response body: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK) // Use the appropriate status code
+	w.WriteHeader(http.StatusOK)
 
-	json.NewEncoder(w).Encode(apiResponse.Data)
+	w.Write(body)
 }
 
 func postDeals(w http.ResponseWriter, r *http.Request) {
-
-	var API_TOKEN = os.Getenv("API_TOKEN")
-	var COMPANY_DOMAIN = os.Getenv("COMPANY_DOMAIN")
+	//TODO: UNCOMMENT:
+	// if r.Method != http.MethodPost {
+	// 	http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+	// 	return
+	// }
 
 	dealData := DealData{
 		Title:             "Deal of the century",
@@ -101,76 +97,119 @@ func postDeals(w http.ResponseWriter, r *http.Request) {
 		AddTime:           "2021-02-11",
 	}
 
-	postBody, err := json.Marshal(dealData)
+	reqBody, err := json.Marshal(dealData)
 	if err != nil {
 		log.Fatalf("JSON Marshaling failed: %s", err.Error())
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
 	}
-	responseBody := bytes.NewBuffer(postBody)
+	reqBodyBytes := bytes.NewBuffer(reqBody)
 
 	requestURL := "https://" + COMPANY_DOMAIN + ".pipedrive.com/api/v1/deals?api_token=" + API_TOKEN
 	fmt.Println(requestURL)
 
-	resp, err := http.Post("https://postman-echo.com/post", "application/json", responseBody)
-
-	//Handle Error
+	req, err := http.NewRequest(http.MethodPost, requestURL, reqBodyBytes)
 	if err != nil {
-		log.Fatalf("An Error Occured %v", err)
+		log.Printf("Failed to create request: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
 	}
 
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Printf("Request failed: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
 	defer resp.Body.Close()
 
 	//Read the response body
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		log.Fatalln(err)
+		log.Printf("Failed to read response body: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
 	}
 
-	sb := string(body)
-	fmt.Println(sb)
-	if resp.StatusCode == 200 {
-		// json.NewEncoder(w).Encode(resp.Body)
-		w.Header().Set("Content-Type", "application/json") // Set the Content-Type header
-		w.Write(body)                                      // Write the response body
-	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
 
+	w.Write(body)
 }
 
 func putDeals(w http.ResponseWriter, r *http.Request) {
-	var API_TOKEN = os.Getenv("API_TOKEN")
-	var COMPANY_DOMAIN = os.Getenv("COMPANY_DOMAIN")
-
-	userID_Gert := "21814964"
+	// userID_Gert := int64(21814964) //TODO: HCANGE THIS
 	dealID := "1" //TODO: CHANGE THIS
-	data, err := json.Marshal(map[string]interface{}{
-		"user_id": userID_Gert,
-	})
 
-	requestURL := "https://" + COMPANY_DOMAIN + ".pipedrive.com/api/v1/deals/" + dealID + "?api_token=" + API_TOKEN
+	// data, err := json.Marshal(map[string]interface{}{
+	// "user_id": userID_Gert,
+	// })
+	type Data struct {
+		Title    string  `json:"title"`
+		Value    float64 `json:"value"`
+		Currency string  `json:"currency"`
+		// UserID   interface{} `json:"user_id"` // Using interface{} to allow null values
+	}
+
+	newTitle := "THIS TITLE VALUE HAS BEEN CHANGED BY THE API"
+
+	data := Data{
+		// UserID:   userID_Gert,
+		Title:    newTitle,
+		Currency: "EUR",
+		Value:    2000,
+	}
+
+	reqBody, err := json.Marshal(data)
+	if err != nil {
+		log.Fatalf("JSON Marshaling failed: %s", err.Error())
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+	reqBodyBytes := bytes.NewBuffer(reqBody)
+
+	requestURL := "https://" + COMPANY_DOMAIN + ".pipedrive.com/api/v2/deals/" + dealID + "?api_token=" + API_TOKEN
 	fmt.Println(requestURL)
 
 	client := &http.Client{}
-	req, err := http.NewRequest(http.MethodPut, requestURL, bytes.NewBuffer(data))
+	req, err := http.NewRequest(http.MethodPatch, requestURL, reqBodyBytes)
 	if err != nil {
-		// handle error
-		log.Fatal(err)
+		log.Printf("Failed to create request: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
 	}
+
+	req.Header.Set("Content-Type", "application/json")
+
 	resp, err := client.Do(req)
 	if err != nil {
-		// handle error
-		log.Fatal(err)
+		log.Printf("Request failed: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
 	}
+
+	if resp.StatusCode == 200 {
+		fmt.Println("chaged deal: " + dealID + " title to: " + newTitle)
+	}
+
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		log.Fatal(err)
+		log.Printf("failed to read response body %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
 	}
-	log.Println(string(body))
-	// resp, err := http.Pu("https://postman-echo.com/post", "application/json", responseBody)
 
-	// json.NewEncoder(w).Encode(todos)
+	log.Println(string(body))
 
 	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	w.Write(body)
 }
 
 // TOOL USED:
@@ -640,14 +679,14 @@ type DealData struct {
 	Title             string      `json:"title"`
 	Value             float64     `json:"value"`
 	Currency          string      `json:"currency"`
-	UserID            interface{} `json:"user_id"`   // Using interface{} to allow null values
-	PersonID          interface{} `json:"person_id"` // Using interface{} to allow null values
+	UserID            interface{} `json:"user_id"`
+	PersonID          interface{} `json:"person_id"`
 	OrgID             int         `json:"org_id"`
 	StageID           int         `json:"stage_id"`
 	Status            string      `json:"status"`
 	ExpectedCloseDate string      `json:"expected_close_date"`
 	Probability       int         `json:"probability"`
-	LostReason        interface{} `json:"lost_reason"` // Using interface{} to allow null values
+	LostReason        interface{} `json:"lost_reason"`
 	VisibleTo         int         `json:"visible_to"`
 	AddTime           string      `json:"add_time"`
 }
