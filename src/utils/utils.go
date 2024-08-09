@@ -23,9 +23,10 @@ func Log_request(r *http.Request, message string) {
 	Log_event(MakeGreen(fullURL), MakeGreen(message))
 }
 
-func LoadEnvFile() {
-	err := godotenv.Load()
+func LoadEnvFile(path string) {
+	err := godotenv.Load(path)
 	if err != nil {
+		fmt.Println(err)
 		fmt.Println(MakeRed("Please make sure your .env is in the project root"))
 		fmt.Println(MakeRed("and that API_TOKEN and COMPANY_DOMAIN are set"))
 		log.Fatal("Error loading .env file")

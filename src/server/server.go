@@ -21,7 +21,7 @@ var API_TOKEN string
 var COMPANY_DOMAIN string
 
 func InitServer() {
-	utils.LoadEnvFile()
+	utils.LoadEnvFile(".env")
 	API_TOKEN = os.Getenv("API_TOKEN")
 	COMPANY_DOMAIN = os.Getenv("COMPANY_DOMAIN")
 
@@ -38,8 +38,6 @@ func InitServer() {
 
 // TODO: consider adding this kind of modularity into your code:       const response = await api.addDeal(data);
 func getDeals(w http.ResponseWriter, r *http.Request) {
-	// utils.Log_request(r, "got call to deals")
-	// TODO: import these better
 
 	if r.Method != http.MethodGet {
 		httpErrorHandler(w, "Invalid request method", http.StatusMethodNotAllowed, r)
@@ -74,7 +72,11 @@ func getDeals(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 
-	w.Write(body)
+	_, err = w.Write(body)
+	if err != nil {
+		httpErrorHandler(w, "Internal server error", http.StatusInternalServerError, r)
+		return
+	}
 	utils.Log_request(r, "statusCode: 200")
 }
 
@@ -140,7 +142,11 @@ func postDeals(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 
-	w.Write(body)
+	_, err = w.Write(body)
+	if err != nil {
+		httpErrorHandler(w, "Internal server error", http.StatusInternalServerError, r)
+		return
+	}
 	utils.Log_request(r, "statusCode: 200")
 }
 
@@ -213,7 +219,11 @@ func putDeals(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 
-	w.Write(body)
+	_, err = w.Write(body)
+	if err != nil {
+		httpErrorHandler(w, "Internal server error", http.StatusInternalServerError, r)
+		return
+	}
 	utils.Log_request(r, "statusCode: 200")
 }
 
@@ -244,7 +254,11 @@ func getMetrics(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.Write(jsonData)
+	_, err = w.Write(jsonData)
+	if err != nil {
+		httpErrorHandler(w, "Internal server error", http.StatusInternalServerError, r)
+		return
+	}
 	utils.Log_request(r, "statusCode: 200")
 }
 
