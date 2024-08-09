@@ -22,10 +22,10 @@ jobs:
     - name: Run tests
       run: go test ./...
 
-    - name: Lint with golangci-lint
-      uses: golangci/golangci-lint-action@v1.33.0
+    - name: golangci-lint
+      uses: golangci/golangci-lint-action@v6
       with:
-        args: run --fast --print-issued-lines=false
+        version: v1.59
 
 # test 1.1
 
