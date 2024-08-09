@@ -1,0 +1,15 @@
+name: master_merged
+
+on:
+    pull_request:
+        types:
+            - closed
+        branches:
+            - main
+jobs:
+  master_merged:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == 'true'
+    steps:
+      - name: Log Deployed!
+        run: echo "Deployed!"
