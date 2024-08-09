@@ -8,8 +8,8 @@ on:
             - main
 jobs:
   master_merged:
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
-    if: github.event.pull_request.merged == 'true'
     steps:
       - name: Log Deployed!
         run: echo "Deployed!"
