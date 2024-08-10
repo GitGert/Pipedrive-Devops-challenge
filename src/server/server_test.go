@@ -3,19 +3,15 @@ package server
 import (
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
 
 	utils "github.com/GitGert/Pipedrive-Devops-challenge/src/utils"
 )
 
+// This test currently fails because I am not mocking the .evn file imports
+// also I need to mock the request.
 func TestGetDeals(t *testing.T) {
 	utils.LoadEnvFile("./../../.env")
-	API_TOKEN = os.Getenv("API_TOKEN")
-	COMPANY_DOMAIN = os.Getenv("COMPANY_DOMAIN")
-
-	t.Setenv("COMPANY_DOMAIN", COMPANY_DOMAIN)
-	t.Setenv("API_TOKEN", API_TOKEN)
 
 	server := httptest.NewServer(http.HandlerFunc(getDeals))
 
