@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"time"
 
+	"github.com/GitGert/Pipedrive-Devops-challenge/src/constants"
 	"github.com/joho/godotenv"
 )
 
@@ -31,10 +33,12 @@ func LoadEnvFile(path string) {
 		fmt.Println(MakeRed("and that API_TOKEN and COMPANY_DOMAIN are set"))
 		log.Fatal("Error loading .env file")
 	}
+	constants.API_TOKEN = os.Getenv("API_TOKEN")
+	constants.COMPANY_DOMAIN = os.Getenv("COMPANY_DOMAIN")
 }
 
 func GetUrl(r *http.Request) string {
-	scheme := "http" // Default scheme, change based on your application logic
+	scheme := "http"
 	if r.TLS != nil {
 		scheme = "https"
 	}
