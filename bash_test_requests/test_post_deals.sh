@@ -1,4 +1,4 @@
-curl -X POST http://localhost:8080/post_deals \
+curl -X POST http://localhost:8080/deals \
      -H "Content-Type: application/json" \
      -d '{
            "title": "Example Deal",

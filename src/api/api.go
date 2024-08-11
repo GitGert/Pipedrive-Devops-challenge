@@ -17,7 +17,6 @@ func NewService() *Service {
 }
 
 func (s *Service) GetDeals() (*http.Response, error) {
-
 	requestURL := "https://" + constants.COMPANY_DOMAIN + ".pipedrive.com/api/v1/deals?limit=20&api_token=" + constants.API_TOKEN
 
 	req, err := http.NewRequest(http.MethodGet, requestURL, nil)
@@ -31,7 +30,6 @@ func (s *Service) GetDeals() (*http.Response, error) {
 }
 
 func (s *Service) AddDeal(dealData models.PostDeal) (*http.Response, error) {
-
 	reqBody, err := json.Marshal(dealData)
 	if err != nil {
 		return nil, err
@@ -58,6 +56,7 @@ func (s *Service) ModifyDeal(data models.PatchDeal, dealID string) (*http.Respon
 		log.Fatalf("JSON Marshaling failed: %s", err.Error())
 		return nil, err
 	}
+
 	reqBodyBytes := bytes.NewBuffer(reqBody)
 
 	requestURL := "https://" + constants.COMPANY_DOMAIN + ".pipedrive.com/api/v2/deals/" + dealID + "?api_token=" + constants.API_TOKEN

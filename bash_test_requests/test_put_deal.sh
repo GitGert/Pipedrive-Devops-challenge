@@ -1,4 +1,4 @@
-curl -X PUT http://localhost:8080/put_deals?dealId=20 \
+curl -X PUT http://localhost:8080/deals?dealId=20 \
 -H "Content-Type: application/json" \
 -d '{
   "title": "Deal Title",
