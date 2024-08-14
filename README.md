@@ -6,7 +6,7 @@ All of the tasks requirements can be found [in this pdf](Software_Engineering_In
 
 ### PART 1  - API
 
-I wrote a simple http server using [gorilla mux](https://github.com/gorilla/mux) with 3 endpoints (GET /deals, POST /deals, PUT /deals).
+I wrote a simple http server using [gorilla mux](https://github.com/gorilla/mux) with 3 endpoints (GET /deals, POST /deals, PUT /deals) that forwards request to the [pipedrive deals api](https://developers.pipedrive.com/docs/api/v1/Deals).
 
 For making api calls I stored API_TOKEN and COMPANY_DOMAIN in .env file where they are being read into constants.go
 
@@ -20,9 +20,10 @@ PUT /deals - expects a body and a dealId to be in the request, both of them will
 ### PART 2 - Instrumentation
 
 LOG EVERYTHING -
-I decided to log all request and the status codes that my server gives (note that a request to my server can yield a 200 response while the Pipedrive API gave an error. The reason
-I decided to do it this way is because I see myself as a middle man, and I am not validating the data that is being sent to my server for possible issues with Pipedrive API. My 
-server does validate fields and the data type in those fields but not the correctness of the request.)
+I decided to log all request and the status codes that my server returns.
+
+Note that a request to my server can yield a 200 response while the Pipedrive API gave an error in that case the error will be seen in the response body.
+My server validates fields and the data type in those fields but not the correctness of the request.
 
 all the logs have a timestamp and are colored red or green to find problems at a glance.
 
@@ -43,8 +44,10 @@ Created this reamde and [dockerfile](Dockerfile) for easy reproducibility
 
 ## HOW TO RUN
 
-Before you can run anything You will need to have a Pipedrive account with at least one deal.
-you will also need to add a .env file to the project root with your pipedrive COMPANY_DOMAIN and API_TOKEN
+### prerequisites
+Before you can run anything You will need to have a [Pipedrive](https://www.pipedrive.com/en/gettingstarted-crm?utm_source=google&utm_medium=cpc&utm_campaign=EE_EN_Brd_Pure_Brand_Exact&utm_content=Core&utm_term=pipedrive&cid=21485276043&aid=161898174661&tid=kwd-25221389681&gad_source=1&gclid=Cj0KCQjwq_G1BhCSARIsACc7Nxoxy7apviU4hvMoo9qOadDvGR07xLQEXkboKUJH_7viHwqkVLgz6ckaAldJEALw_wcB) account with at least one deal.
+you will also need to add a .env file to the project root with your pipedrive COMPANY_DOMAIN and API_TOKEN.
+
 the file should look like this:
 ```bash
 COMPANY_DOMAIN=fakecompanyName1
@@ -62,7 +65,7 @@ to build the docker container run:
 docker build -t pipedrive_app:latest .
 ```
 
-Now you can either go to your docker desktop app and run the container there.
+Now you can either go to your docker desktop app and run the container there (If you are using the docker desktop app you will need to manually set the host port to 8080)
 
 Or use the command line:
 ```bash
@@ -72,7 +75,7 @@ docker run -p 8080:8080 pipedrive_app
 
 ### how to run - LOCAL
 
-You will need to have [Golang](https://go.dev/) installed on your machine.
+You will need to have [Golang](https://go.dev/) 1.22+ installed on your machine.
 
 To install all dependencies run:
 ```bash
