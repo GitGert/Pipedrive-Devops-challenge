@@ -21,23 +21,46 @@ func InitServer() {
 
 	r := mux.NewRouter()
 
-	r.HandleFunc("/deals", getDeals).Methods("GET")
-	r.HandleFunc("/deals", postDeals).Methods("POST")
-	r.HandleFunc("/deals", putDeals).Methods("PUT")
+	pipedriveApi := api.NewService()
+
+	getDealsFunc := HandlerWithService(pipedriveApi, getDeals)
+	postDealsFunc := HandlerWithService(pipedriveApi, postDeals)
+	putDealsFunc := HandlerWithService(pipedriveApi, putDeals)
+
+	r.HandleFunc("/deals", getDealsFunc).Methods("GET")
+	r.HandleFunc("/deals", postDealsFunc).Methods("POST")
+	r.HandleFunc("/deals", putDealsFunc).Methods("PUT")
 	r.HandleFunc("/metrics", getMetrics).Methods("GET")
 
 	fmt.Println("server started at http://localhost:8080/")
 	log.Fatal(http.ListenAndServe(":8080", r))
 }
 
-func getDeals(w http.ResponseWriter, r *http.Request) {
+type ApiService interface {
+	GetDeals() (*http.Response, error)
+	AddDeal(dealData models.PostDeal) (*http.Response, error)
+	ModifyDeal(data models.PatchDeal, dealID string) (*http.Response, error)
+}
+
+type handlerFunc func(w http.ResponseWriter, r *http.Request, service ApiService)
+
+// HandlerWithService wraps the original handler and injects the service
+func HandlerWithService(service ApiService, fn handlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		fn(w, r, service)
+	}
+}
+
+func getDeals(w http.ResponseWriter, r *http.Request, service ApiService) {
 	if r.Method != http.MethodGet {
 		httpErrorHandler(w, "Invalid request method", http.StatusMethodNotAllowed, r)
 		return
 	}
 
-	pipedriveApi := api.NewService()
-	resp, err := pipedriveApi.GetDeals()
+	// pipedriveApi := api.NewService()
+	// resp, err := pipedriveApi.GetDeals()
+
+	resp, err := service.GetDeals()
 	if err != nil {
 		fmt.Printf("error making http request: %s\n", err)
 		httpErrorHandler(w, "Internal server error", http.StatusInternalServerError, r)
@@ -63,7 +86,7 @@ func getDeals(w http.ResponseWriter, r *http.Request) {
 	utils.Log_request(r, "statusCode: 200")
 }
 
-func postDeals(w http.ResponseWriter, r *http.Request) {
+func postDeals(w http.ResponseWriter, r *http.Request, service ApiService) {
 	if r.Method != http.MethodPost {
 		httpErrorHandler(w, "Invalid request method", http.StatusMethodNotAllowed, r)
 		return
@@ -77,8 +100,8 @@ func postDeals(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pipedriveApi := api.NewService()
-	resp, err := pipedriveApi.AddDeal(dealData)
+	// pipedriveApi := api.NewService()
+	resp, err := service.AddDeal(dealData)
 	if err != nil {
 		httpErrorHandler(w, "Internal server error", http.StatusInternalServerError, r)
 		return
@@ -103,7 +126,7 @@ func postDeals(w http.ResponseWriter, r *http.Request) {
 	utils.Log_request(r, "statusCode: 200")
 }
 
-func putDeals(w http.ResponseWriter, r *http.Request) {
+func putDeals(w http.ResponseWriter, r *http.Request, service ApiService) {
 	if r.Method != http.MethodPut {
 		httpErrorHandler(w, "Invalid request method", http.StatusMethodNotAllowed, r)
 		return
@@ -124,8 +147,8 @@ func putDeals(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pipedriveApi := api.NewService()
-	resp, err := pipedriveApi.ModifyDeal(data, dealID)
+	// pipedriveApi := api.NewService()
+	resp, err := service.ModifyDeal(data, dealID)
 	if err != nil {
 		httpErrorHandler(w, "Internal server error", http.StatusInternalServerError, r)
 		return

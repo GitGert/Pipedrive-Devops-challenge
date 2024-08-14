@@ -20,7 +20,7 @@ PUT /deals - expects a body and a dealId to be in the request, both of them will
 ### PART 2 - Instrumentation
 
 LOG EVERYTHING -
-I decided to log all request and the statuscodes that my server gives (note that a request to my server can yield a 200 response while the Pipedrive API gave an error. The reason
+I decided to log all request and the status codes that my server gives (note that a request to my server can yield a 200 response while the Pipedrive API gave an error. The reason
 I decided to do it this way is because I see myself as a middle man, and I am not validating the data that is being sent to my server for possible issues with Pipedrive API. My 
 server does validate fields and the data type in those fields but not the correctness of the request.)
 
@@ -30,7 +30,7 @@ GET /metrics - sends a request to all other 3 endpoints and returns the response
 
 ### PART 3 - CI
 
-I used [Github actions](.github/workflows/test_on_commit.yml) to run my golang linter and my test (the test is currently failing because I did not yet figure out how to mock data for tests Golang).
+I used [Github actions](.github/workflows/test_on_commit.yml) to run a golang linter and tests.
 
 
 ### PART 4 - CD
